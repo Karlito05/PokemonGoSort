@@ -1,12 +1,12 @@
 import PIL
 import easyocr
 import pyautogui
-import bs4
 from time import sleep
 
+isRunning = True
 data = []
 
-for _ in range(0,10):
+while isRunning:
     reader = easyocr.Reader(['en'])
 
     screenshot = PIL.ImageGrab.grab(bbox=[1650, 590, 2100, 635])
@@ -37,5 +37,3 @@ for _ in range(0,10):
 
     sleep(2)
 
-for thing in data:
-    print(thing[0], thing[1][0], thing[1][1])
