@@ -20,21 +20,18 @@ def getAttackInfo(browser, name: str, *pokeType: str):
 
     search = browser.find_element(By.CLASS_NAME, "SearchBox_input__Wz5xz")
     search.click()
-    sleep(1)
     search.send_keys(name)
     sleep(1)
     search.click()
-    sleep(1)
 
     ActionChains(browser)\
         .send_keys(Keys.ARROW_DOWN)\
         .send_keys(Keys.ENTER)\
         .perform()
 
-    sleep(1)
+    browser.implicitly_wait(1)
 
     currentURL = browser.current_url
-
 
     for char in currentURL[::-1]:
         if char in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',]:
@@ -56,6 +53,8 @@ def getAttackInfo(browser, name: str, *pokeType: str):
 
     browser.get(currentURL)
 
+    browser.browser.implicitly_wait(5)
+
     attackRating = browser.find_elements(By.XPATH, '/html/body/div/main/div/article[1]/section/table/tbody/tr')
 
     attackRatings = []
@@ -66,6 +65,7 @@ def getAttackInfo(browser, name: str, *pokeType: str):
         
     return attackRatings
 
+data = []
 
 for i in range(0,10):
     reader = easyocr.Reader(['en'])
@@ -76,10 +76,10 @@ for i in range(0,10):
     name = reader.readtext("image.png")[0][1]
 
     pyautogui.moveTo(1650, 690)
-    pyautogui.dragTo(1650, 545, duration=1)
+    pyautogui.dragTo(1650, 545, duration=0.5)
     pyautogui.click()
 
-    sleep(1)
+    sleep(0.2)
 
     screenshot = PIL.ImageGrab.grab(bbox=[1690, 1225, 1876, 1270])
     screenshot.save("image.png")
@@ -90,9 +90,12 @@ for i in range(0,10):
     screenshot.save("image.png")
 
     attack2 = reader.readtext("image.png")[0][1]
+
+    data.append(getAttackInfo(browser, name))
     
     pyautogui.moveTo(2000, 740)
-    pyautogui.dragRel(-500,0, duration=1)
+    pyautogui.dragRel(-500,0, duration=0.2)
 
-    sleep(0.5)
+    sleep(0.3)
 browser.quit()
+print(data)
