@@ -1339,17 +1339,7 @@
   },
   "Eevee": {
     "link": "https://db.pokemongohub.net/pokemon/133",
-    "evos": [
-      "Eevee",
-      "Eevee",
-      "Eevee",
-      "Eevee",
-      "Eevee",
-      "Eevee",
-      "Eevee",
-      "Eevee",
-      "Sylveon"
-    ]
+    "evos": ["Vaporeon"]
   },
   "Vaporeon": {
     "link": "https://db.pokemongohub.net/pokemon/134",
