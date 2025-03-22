@@ -22,10 +22,47 @@ def getVersions(browser: webdriver.Edge):
 browser = webdriver.Edge()
 output = {}
 linksToIndex = []
+fastAttacks = []
+chargeAttacks = []
 
 browser.get(f'https://db.pokemongohub.net/pokemon/0')
 sleep(2)
 browser.find_element(By.XPATH,'/html/body/div[2]/div/div[2]/div[3]/div/div[2]').click()
+
+browser.get('https://db.pokemongohub.net/moves-list/category-fast')
+
+table = browser.find_elements(By.XPATH, '/html/body/div/main/div/article/section/table/tbody/tr')
+for row in table:
+    fastAttacks.append(row.find_element(By.XPATH, './td/a').text)
+
+sleep(3)
+
+browser.find_element(By.XPATH, '/html/body/div/main/div/article/section/div/div[1]/button[3]').click()
+
+sleep(3)
+table = browser.find_elements(By.XPATH, '/html/body/div/main/div/article/section/table/tbody/tr')
+for row in table:
+    fastAttacks.append(row.find_element(By.XPATH, './td/a').text)
+
+browser.get('https://db.pokemongohub.net/moves-list/category-charge')
+
+table = browser.find_elements(By.XPATH, '/html/body/div/main/div/article/section/table/tbody/tr')
+for row in table:
+    chargeAttacks.append(row.find_element(By.XPATH, './td/a').text)
+
+for _ in range(0,5):
+    browser.find_element(By.XPATH, '/html/body/div/main/div/article/section/div/div[1]/button[3]').click()
+
+    table = browser.find_elements(By.XPATH, '/html/body/div/main/div/article/section/table/tbody/tr')
+    for row in table:
+        chargeAttacks.append(row.find_element(By.XPATH, './td/a').text)
+    sleep(4)
+
+attacks = {'fast': fastAttacks, 'charge': chargeAttacks}
+
+with open('AttackLookup', 'w') as file:
+    data = json.dump(attacks,file, indent=4)
+
 
 for i in range(1,1026):
     
@@ -81,7 +118,7 @@ for links in linksToIndex:
 
 browser.quit()
 
-with open('index.json', 'w') as file:
+with open('PokemonLookUp.json', 'w') as file:
     data = json.dump(output,file, indent=4)
 
 #{

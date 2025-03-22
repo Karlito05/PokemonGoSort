@@ -1,101 +1,76 @@
 import PIL
+import PIL.Image
+import PIL.ImageGrab
 import easyocr
 import pyautogui
+import json
+from pynput.keyboard import Controller
 from selenium import webdriver
+from selenium.webdriver.edge.options import Options
 from selenium.webdriver import Keys, ActionChains
 from selenium.webdriver.common.by import By
 from time import sleep
 
-
-browser = webdriver.Edge()
-browser.get("https://db.pokemongohub.net/pokemon/000")
-browser.implicitly_wait(5)
-accept = browser.find_element(By.XPATH, 'html/body/div[2]/div/div[2]/div[3]/div/div[2]')
-accept.click()
-
-def getAttackInfo(browser, name: str, *pokeType: str):
-
-    browser.get("https://db.pokemongohub.net/pokemon/000")
-    browser.implicitly_wait(5)
-
-    search = browser.find_element(By.CLASS_NAME, "SearchBox_input__Wz5xz")
-    search.click()
-    search.send_keys(name)
-    sleep(1)
-    search.click()
-
-    ActionChains(browser)\
-        .send_keys(Keys.ARROW_DOWN)\
-        .send_keys(Keys.ENTER)\
-        .perform()
-
-    browser.implicitly_wait(1)
-
-    currentURL = browser.current_url
-
-    for char in currentURL[::-1]:
-        if char in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',]:
-            break
-        currentURL = currentURL[:-1]
-
-    match pokeType:
-        case 'shadow':
-            currentURL += '-shadow'
-        case 'mega':
-            currentURL += '-mega'
-        case 'dynamax':
-            currentURL += '-dynamax'
-        case 'gigantamax':
-            currentURL += '-gigantamax'
-        case _:
-            pass
-
-
-    browser.get(currentURL)
-
-    browser.browser.implicitly_wait(5)
-
-    attackRating = browser.find_elements(By.XPATH, '/html/body/div/main/div/article[1]/section/table/tbody/tr')
-
-    attackRatings = []
-
-    for element in attackRating:
-        rating = element.find_element(By.XPATH, './td')
-        attackRatings.append(rating.text.split('\n')[0])
+class pokeSort():
+    def __init__(self):
+        self.pokeLookup = self.getData('./pokemonlookup.json')
+        self.possibleAttacks = self.getData('./attackLookup.json')
+        self.browser = webdriver.Edge(); Options().add_argument('--headless')
+        self.reader = easyocr.Reader(['en'])
+        self.keyboard = Controller()
         
-    return attackRatings
-
-data = []
-
-for i in range(0,10):
-    reader = easyocr.Reader(['en'])
-
-    screenshot = PIL.ImageGrab.grab(bbox=[1650, 590, 2100, 635])
-    screenshot.save("image.png")
-
-    name = reader.readtext("image.png")[0][1]
-
-    pyautogui.moveTo(1650, 690)
-    pyautogui.dragTo(1650, 545, duration=0.5)
-    pyautogui.click()
-
-    sleep(0.2)
-
-    screenshot = PIL.ImageGrab.grab(bbox=[1690, 1225, 1876, 1270])
-    screenshot.save("image.png")
-
-    attack1 = reader.readtext("image.png")[0][1]
-
-    screenshot = PIL.ImageGrab.grab(bbox=[1690, 1260, 1876, 1320])
-    screenshot.save("image.png")
-
-    attack2 = reader.readtext("image.png")[0][1]
-
-    data.append(getAttackInfo(browser, name))
+    def getData(self, fileName: str) -> dict:
+        with open(fileName, 'r') as file:
+            return json.load(file)
     
-    pyautogui.moveTo(2000, 740)
-    pyautogui.dragRel(-500,0, duration=0.2)
+    def getName(self) -> str:
+        image = PIL.ImageGrab.grab(bbox= (1700, 600, 2150, 630))
+        image.save('./image.png', 'PNG')
+        name = self.reader.readtext('image.png', detail = 0)[0]
+        return name
+    
+    def search(self, searchTerm: str) -> None:
+        pyautogui.click(1900, 300)
+        sleep(2)
+        self.keyboard.type(searchTerm)
+        pyautogui.click(2150, 850)
+    
+    def getAttacks(self) -> list[str]:
+        moveBy = 400
+        attacks = []
+        
+        pyautogui.moveTo(1640, 1230)
+        pyautogui.dragRel(0,-moveBy, duration=0.75)
+        pyautogui.dragRel(0,-10, duration=0.2)
 
-    sleep(0.3)
-browser.quit()
-print(data)
+        image = PIL.ImageGrab.grab(bbox=(1600, 80, 2225, 1350))
+        image.save('image.png', 'PNG')
+        
+        for string in self.reader.readtext('image.png', detail=0):
+            if string in self.possibleAttacks['fast']:
+                attacks.append(string)
+        for string in self.reader.readtext('image.png', detail=0):
+            if string in self.possibleAttacks['charge']:
+                attacks.append(string)
+        
+        return attacks
+    
+    def getPokemonInfo(self, name: str) -> list[str]:
+        try:
+            self.browser.get(self.pokeLookup[self.pokeLookup[name]['evos'][-1]]['link'])
+        except IndexError:
+            self.browser.get(self.pokeLookup[name]['link'])
+        attacks = []
+        
+        for row in self.browser.find_elements(By.XPATH, '/html/body/div/main/div/article[1]/section/table/tbody/tr'):
+            attacks.append(row.find_element(By.XPATH, './td').text.split('\n')[0])
+            
+        return attacks
+    
+    def mainLoop(self) -> None:
+        print('We are faching')
+        self.browser.quit()
+
+if __name__ == '__main__':
+    ps = pokeSort()
+    ps.mainLoop()
